@@ -19,5 +19,5 @@ def authenticate(email: str, password: str):
 
     expected = DEFAULT_PASSWORDS.get(role)
     if expected and password == expected:
-        return dict(role)
+        return {k: row[k] for k in row.keys()}
     return None

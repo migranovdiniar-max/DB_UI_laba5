@@ -7,7 +7,7 @@ from app.ui.ui_main import MainWindow
 class LoginWindow:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("Авторизация — English App")
+        self.root.title("Authentication - English App")
         self.root.geometry("3320x180")
 
         tk.Label(self.root, text="Email").pack(pady=(10, 0))
@@ -27,9 +27,12 @@ class LoginWindow:
         email = self.email.get().strip()
         password = self.password.get().strip()
         user = authenticate(email, password)
+        print("Email:", email)
+        print("Password:", password)
+
 
         if user:
             self.root.destroy()
             MainWindow(user)
         else:
-            messagebox.showerror("Ошибка", "Неверный логин или пароль")
+            messagebox.showerror("Error", "Invalid Login or Password")

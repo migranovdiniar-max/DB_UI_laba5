@@ -1,48 +1,68 @@
 import tkinter as tk
-from app.ui.ui_vocabulary import VocabularyWindow 
+from tkinter import ttk
+
+# подключаем все UI-модули
+from app.ui.ui_topic import TopicWindow
+from app.ui.ui_grammar import GrammarWindow
+from app.ui.ui_vocabulary import VocabularyWindow
+from app.ui.ui_exercise import ExerciseWindow
+from app.ui.ui_exercise_answer import ExerciseAnswerWindow
+from app.ui.ui_user_answers import UserExerciseWindow
+from app.ui.ui_users import UsersWindow
+from app.ui.ui_definition import DefinitionWindow
 
 
 class MainWindow:
-    def __init__(self, user: dict):
+    def __init__(self, user):
         self.user = user
-        self.root = tk.Tk()
-        self.root.title(f"English App — {user['role']} — {user['name']}")
-        self.root.geometry("600x400")
+        self.win = tk.Tk()
+        self.win.title(f"Main Menu - {user['role']}")
+        self.win.geometry("500x500")
 
-        tk.Label(self.root, text=f"Welcome, {user['name']} ({user['role']})", font=("Arial", 14)).pack(pady=10)
+        title = tk.Label(self.win, text="Main Menu", font=("Arial", 18, "bold"))
+        title.pack(pady=15)
 
-        if user["role"] in ("admin", "teacher"):
-            btn_ex = tk.Button(self.root, text="Exercises (manage)", command=self.open_exercises)
-            btn_ex.pack(fill="x", padx=20, pady=5)
+        frame = tk.Frame(self.win)
+        frame.pack(expand=True)
 
-        if user["role"] in ("admin", "teacher"):
-            btn_users = tk.Button(self.root, text="Users (manage)", command=self.open_users)
-            btn_users.pack(fill="x", padx=20, pady=5)
+        # Создаём кнопки
+        buttons = [
+            ("Topics", self.open_topics),
+            ("Grammar Rules", self.open_grammar),
+            ("Vocabulary", self.open_vocabulary),
+            ("Definition", self.open_definition),
+            ("Exercises", self.open_exercises),
+            ("Exercise Answers", self.open_exercise_answers),
+            ("User Answers", self.open_user_answers),
+            ("Users", self.open_users)
+        ]
 
-        btn_vocab = tk.Button(self.root, 
-                              text="Vocabulary", 
-                              command=self.open_vocabulary)
-        btn_vocab.pack(fill="x", padx=20, pady=5)
+        for text, cmd in buttons:
+            tk.Button(frame, text=text, width=25, height=2, command=cmd)\
+                .pack(pady=6)
 
-        btn_exit = tk.Button(self.root, text="Exit", command=self.root.destroy)
-        btn_exit.pack(side="bottom", pady=10)
+        self.win.mainloop()
 
-        self.root.mainloop()
+    def open_topics(self):
+        TopicWindow()
 
-        def open_vocabulary(self):
-            from app.ui.ui_vocabulary import VocabularyWindow
-            VocabularyWindow()
+    def open_grammar(self):
+        GrammarWindow()
 
-        def open_user(self):
-            from app.ui.ui_users import UserWindow
-            UserWindow()
+    def open_vocabulary(self):
+        VocabularyWindow()
 
-        def open_exercises(self):
-            from app.ui.ui_exercise import ExerciseWindow
-            ExerciseWindow()
+    def open_definition(self):
+        DefinitionWindow()
 
+    def open_exercises(self):
+        ExerciseWindow()
 
-from app.ui.ui_login import LoginWindow
+    def open_exercise_answers(self):
+        ExerciseAnswerWindow()
 
-if __name__ == "__main__":
-    LoginWindow()
+    def open_user_answers(self):
+        UserExerciseWindow(self.user)
+
+    def open_users(self):
+        UsersWindow()

@@ -77,3 +77,11 @@ CREATE TABLE IF NOT EXISTS user_exercise_answer (
   FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE,
   FOREIGN KEY(exercise_id) REFERENCES exercise(exercise_id) ON DELETE CASCADE
 );
+
+-- DELETE FROM table_name;
+-- VACUUM;
+
+-- -- DELETE FROM table_name;
+-- -- DELETE FROM sqlite_sequence WHERE name='table_name';
+-- VACUUM;
+

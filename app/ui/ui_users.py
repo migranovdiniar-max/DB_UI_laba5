@@ -5,22 +5,21 @@ from app.db import get_connection
 class UsersWindow:
     def __init__(self):
         self.win = tk.Toplevel()
-        self.win.title("Users")
+        self.win.title("Users Management")
         self.win.geometry("700x400")
 
-        self.tree = ttk.Treeview(self.win, columns=("name","email","role"), show="headings")
-        for col, title in [("name","Name"), ("email","Email"), ("role","Role")]:
+        self.tree = ttk.Treeview(self.win, columns=("name","email","role","current_level","start_date","target_level"), show="headings")
+        for col, title in [("name","Name"),("email","Email"),("role","Role"),
+                           ("current_level","Current Level"),("start_date","Start Date"),("target_level","Target Level")]:
             self.tree.heading(col, text=title)
-            self.tree.column(col, width=200)
+            self.tree.column(col, width=120)
         self.tree.pack(fill="both", expand=True)
 
         frame = tk.Frame(self.win)
         frame.pack(fill="x", pady=6)
-        tk.Button(frame, text="Add", command=self.add_user).pack(side="left", padx=5)
-        tk.Button(frame, text="Edit", command=self.edit_user).pack(side="left", padx=5)
-        tk.Button(frame, text="Delete", command=self.delete_user).pack(side="left", padx=5)
+        tk.Button(frame, text="Add User", command=self.add_user).pack(side="left", padx=5)
+        tk.Button(frame, text="Edit User", command=self.edit_user).pack(side="left", padx=5)
         tk.Button(frame, text="Refresh", command=self.load_data).pack(side="left", padx=5)
-
         self.load_data()
 
     def load_data(self):
@@ -28,19 +27,21 @@ class UsersWindow:
             self.tree.delete(r)
         conn = get_connection()
         cur = conn.cursor()
-        cur.execute("SELECT user_id, name, email, role FROM users")
+        cur.execute("SELECT user_id, name, email, role, current_level, start_date, target_level FROM users")
         for row in cur.fetchall():
-            self.tree.insert("", "end", iid=row["user_id"], values=(row["name"], row["email"], row["role"]))
+            self.tree.insert("", "end", iid=row["user_id"], values=(row["name"], row["email"], row["role"], row["current_level"], row["start_date"], row["target_level"]))
         conn.close()
 
     def add_user(self):
-        dlg = AddEditUser(self.win)
+        dlg = UserDialog(self.win)
         self.win.wait_window(dlg.top)
         if dlg.result:
             conn = get_connection()
             cur = conn.cursor()
-            cur.execute("INSERT INTO users (name,email,role) VALUES (?, ?, ?)",
-                        (dlg.result["name"], dlg.result["email"], dlg.result["role"]))
+            cur.execute("""
+                INSERT INTO users (name,email,role,current_level,start_date,target_level)
+                VALUES (?,?,?,?,?,?)
+            """, (dlg.result["name"], dlg.result["email"], dlg.result["role"], dlg.result["current_level"], dlg.result["start_date"], dlg.result["target_level"]))
             conn.commit()
             conn.close()
             self.load_data()
@@ -55,54 +56,41 @@ class UsersWindow:
         cur.execute("SELECT * FROM users WHERE user_id=?", (user_id,))
         r = cur.fetchone()
         conn.close()
-        dlg = AddEditUser(self.win, data=r)
+        dlg = UserDialog(self.win, data=r)
         self.win.wait_window(dlg.top)
         if dlg.result:
             conn = get_connection()
             cur = conn.cursor()
-            cur.execute("UPDATE users SET name=?, email=?, role=? WHERE user_id=?",
-                        (dlg.result["name"], dlg.result["email"], dlg.result["role"], user_id))
+            cur.execute("""
+                UPDATE users
+                SET name=?, email=?, role=?, current_level=?, start_date=?, target_level=?
+                WHERE user_id=?
+            """, (dlg.result["name"], dlg.result["email"], dlg.result["role"], dlg.result["current_level"], dlg.result["start_date"], dlg.result["target_level"], user_id))
             conn.commit()
             conn.close()
             self.load_data()
 
-    def delete_user(self):
-        sel = self.tree.selection()
-        if not sel:
-            return
-        user_id = sel[0]
-        if not messagebox.askyesno("Confirm", "Delete selected user?"):
-            return
-        conn = get_connection()
-        cur = conn.cursor()
-        cur.execute("DELETE FROM users WHERE user_id=?", (user_id,))
-        conn.commit()
-        conn.close()
-        self.load_data()
-
-class AddEditUser:
+class UserDialog:
     def __init__(self, parent, data=None):
         self.result = None
         self.top = tk.Toplevel(parent)
         self.top.title("Add / Edit User")
-        tk.Label(self.top, text="Name").grid(row=0, column=0)
-        self.e_name = tk.Entry(self.top); self.e_name.grid(row=0, column=1)
-        tk.Label(self.top, text="Email").grid(row=1, column=0)
-        self.e_email = tk.Entry(self.top); self.e_email.grid(row=1, column=1)
-        tk.Label(self.top, text="Role").grid(row=2, column=0)
-        self.e_role = tk.Entry(self.top); self.e_role.grid(row=2, column=1)
-
-        tk.Button(self.top, text="Save", command=self.on_save).grid(row=3, column=0, columnspan=2)
-
+        labels = ["Name","Email","Role","Current Level","Start Date","Target Level"]
+        self.entries = {}
+        for i, label in enumerate(labels):
+            tk.Label(self.top, text=label).grid(row=i, column=0)
+            e = tk.Entry(self.top)
+            e.grid(row=i, column=1)
+            self.entries[label] = e
+        tk.Button(self.top, text="Save", command=self.on_save).grid(row=len(labels), column=0, columnspan=2)
         if data:
-            self.e_name.insert(0, data["name"])
-            self.e_email.insert(0, data["email"])
-            self.e_role.insert(0, data["role"])
+            self.entries["Name"].insert(0, data["name"])
+            self.entries["Email"].insert(0, data["email"])
+            self.entries["Role"].insert(0, data["role"])
+            self.entries["Current Level"].insert(0, data["current_level"] or "")
+            self.entries["Start Date"].insert(0, data["start_date"] or "")
+            self.entries["Target Level"].insert(0, data["target_level"] or "")
 
     def on_save(self):
-        self.result = {
-            "name": self.e_name.get().strip(),
-            "email": self.e_email.get().strip(),
-            "role": self.e_role.get().strip()
-        }
+        self.result = {k: self.entries[k].get().strip() for k in self.entries}
         self.top.destroy()

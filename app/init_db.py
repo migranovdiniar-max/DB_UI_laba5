@@ -1,5 +1,5 @@
 from pathlib import Path
-from app.db import get_connection
+from db import get_connection
 import sqlite3
 
 SQL_FILE = Path(__file__).resolve().parent / "db" / "init_sqlite.sql"
